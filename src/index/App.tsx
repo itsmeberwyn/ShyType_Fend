@@ -7,7 +7,7 @@ import './App.css';
 function App() {
   return (
     
-    <div className="container">
+    <div className="index_container">
    
 
     <section className="modal hidden">

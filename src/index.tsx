@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './index/App';
 import Home from './home/Home';
+import Chats from './chats/chats';
 import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(
@@ -11,7 +12,8 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     {/* <App /> */}
-    <Home/>
+    {/* <Home/> */}
+    <Chats/>
   </React.StrictMode>
 );
 
