@@ -1,13 +1,58 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './chats.css';
+import Pusher from 'pusher-js';
+import axios from 'axios';
 
-function chats(){
-    return(
+function Chats() {
+    const [message, setMessage] = useState("");
+    const [channel, setChannel]: any = useState("");
+    const [chat, setChat]: any = useState("");
+
+    const pusher = new Pusher(`${process.env.REACT_APP_PUSHER_KEY}`, {
+        cluster: 'ap1'
+    });
+
+    const sendMessage = () => {
+        let payload = {
+            receiver: 2,
+            sender: 1,
+            message: "",
+            timestamp: ""
+        }
+        console.log(message)
+
+        axios.post('http://localhost:8000/message', payload);
+        // pass {receiver_id, currentUser_id, message}
+        
+        channel.bind('message', (data: any) => {
+            setChat({ chats: [...chat, data] });
+            setMessage("")
+        });
+    }
+
+    useEffect(() => {
+        updateChannel("2")
+    }, [])
+
+    const updateChannel = (receiver: any) => {
+        // console.log(JSON.parse(sessionStorage.getItem('user') || "").user_id)
+        let currentUserLoggedIn = JSON.parse(sessionStorage.getItem('user') || "").user_id
+        let newChannel = '';
+        if (receiver > currentUserLoggedIn) {
+            newChannel = receiver + '-' + currentUserLoggedIn;
+        } else {
+            newChannel = currentUserLoggedIn + '-' + receiver;
+        }
+
+        setChannel(pusher.subscribe(newChannel));
+    }
+
+    return (
         <div className='chat_container'>
-         {/* sidebar starts  */}
+            {/* sidebar starts  */}
             <div className="sidebar">
-                <img src="img/logo.svg" width="50px" height="50px" alt="logo" className="logo"/>
-            {/* <!-- <i className="fab fa-twitter"></i> --> */}
+                <img src="img/logo.svg" width="50px" height="50px" alt="logo" className="logo" />
+                {/* <!-- <i className="fab fa-twitter"></i> --> */}
                 <div className="sidebarOption active">
                     <span className="material-icons"> home </span>
                     <h2>Home</h2>
@@ -57,7 +102,7 @@ function chats(){
                                 <div className="my-chat">Pakyu too !</div>
                                 <div className="client-chat">Luh dati kabang tnga?</div>
                                 <div className="my-chat">sayo? oo pare matagal  na. Yieee</div>
-                            
+
 
                                 <div className="client-chat">Hi!</div>
                                 <div className="my-chat">Hello!</div>
@@ -75,8 +120,8 @@ function chats(){
                             </div>
                             {/* <!-- input field section --> */}
                             <div className="chat-input">
-                                <input type="text" placeholder="Enter Message" />
-                                <button className="send-btn">
+                                <input type="text" placeholder="Enter Message" value={message} onChange={(v: any) => setMessage(v.target.value)} />
+                                <button className="send-btn" onClick={() => sendMessage()}>
                                     <img src="./img/send.png" alt="send-btn"></img>
                                 </button>
                             </div>
@@ -94,11 +139,11 @@ function chats(){
                 </div>
                 <div className="widgets__widgetContainer">
                     <div className="header">
-					    <div className="avatar">
-						    <img src="img/avatar.jpg" alt="" />
-					    </div>
-					    <div className="title">Profile</div>
-				    </div>
+                        <div className="avatar">
+                            <img src="img/avatar.jpg" alt="" />
+                        </div>
+                        <div className="title">Profile</div>
+                    </div>
                     <div className="menu">
                         <ul>
                             <li>Matches</li>
@@ -131,7 +176,7 @@ function chats(){
                             <div className="user">Berwyn</div>
                             <div className="text">Lorem ipsum dolor sit amet consectetur adipisicing</div>
                         </div>
-				    </div>
+                    </div>
                     <div className="messages">
                         <div className="avatar">
                             <img src="img/avatar.jpg" alt="" />
@@ -157,4 +202,4 @@ function chats(){
 
     );
 }
-export default chats;
+export default Chats;
