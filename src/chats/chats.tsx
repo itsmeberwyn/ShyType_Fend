@@ -1,50 +1,74 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './chats.css';
-import Pusher from 'pusher-js';
+import Pusher, { Channel } from 'pusher-js';
 import axios from 'axios';
+import moment from 'moment';
 
 function Chats() {
-    const [message, setMessage] = useState("");
-    const [channel, setChannel]: any = useState("");
-    const [chat, setChat]: any = useState("");
-
+    const status = useRef(false)
     const pusher = new Pusher(`${process.env.REACT_APP_PUSHER_KEY}`, {
         cluster: 'ap1'
     });
+    const [message, setMessage] = useState("");
+    const [currentUser, setCurrentUser]: any = useState("");
+
+    const [chat, setChat]: any = useState([
+        {
+            receiver: 2,
+            sender: 1,
+            message: "Hello",
+            timestamp: "2022-10-14T22:11:20+0000"
+        },
+        {
+            receiver: 1,
+            sender: 2,
+            message: "Hi",
+            timestamp: "2022-10-14T22:11:20+0000"
+        },
+    ]);
+
+
 
     const sendMessage = () => {
         let payload = {
-            receiver: 2,
-            sender: 1,
-            message: "",
-            timestamp: ""
+            "receiver": 2,
+            "sender": 1,
+            "message": message,
+            "timestamp": Date.now()
         }
-        console.log(message)
-
-        axios.post('http://localhost:8000/message', payload);
-        // pass {receiver_id, currentUser_id, message}
-        
-        channel.bind('message', (data: any) => {
-            setChat({ chats: [...chat, data] });
-            setMessage("")
-        });
+        setChat((prevState: any) => [...prevState, payload]);
+        setMessage("")
+        // axios.post('http://localhost:8000/message', payload);
     }
 
     useEffect(() => {
-        updateChannel("2")
+        setCurrentUser(JSON.parse(sessionStorage.getItem('user') || "").user_id)
+        let channel = pusher.subscribe(updateChannel("2"))
+        console.log(channel)
+
+        channel.bind('message', (data: any) => {
+            setChat((prevState: any) => {
+                return [...prevState, data]
+            });
+            setMessage("")
+            status.current = false
+        });
     }, [])
 
     const updateChannel = (receiver: any) => {
-        // console.log(JSON.parse(sessionStorage.getItem('user') || "").user_id)
-        let currentUserLoggedIn = JSON.parse(sessionStorage.getItem('user') || "").user_id
+        let currentUser = JSON.parse(sessionStorage.getItem('user') || "").user_id;
         let newChannel = '';
-        if (receiver > currentUserLoggedIn) {
-            newChannel = receiver + '-' + currentUserLoggedIn;
+        if (receiver > currentUser) {
+            newChannel = receiver + '-' + currentUser;
         } else {
-            newChannel = currentUserLoggedIn + '-' + receiver;
+            newChannel = currentUser + '-' + receiver;
         }
 
-        setChannel(pusher.subscribe(newChannel));
+        return newChannel;
+    }
+
+    const formatDatetime = (datetime: string) => {
+        return moment(datetime).format('MMMM Do YYYY, h:mm:ss');
     }
 
     return (
@@ -96,27 +120,19 @@ function Chats() {
                             </div>
                             {/* <!-- main chat section --> */}
                             <div className="chats">
-                                <div className="client-chat">Hi!</div>
-                                <div className="my-chat">Hello!</div>
+                                {
+                                    chat.map((message: any) => {
+                                        return (
+                                            <div className={currentUser === message.sender ? "my-chat" : "client-chat"} title={formatDatetime(message.timestamp)}>{message.message}</div>
+                                        )
+
+                                    })
+                                }
+                                {/* <div className="my-chat">Hello!</div>
                                 <div className="client-chat">Pakyu</div>
                                 <div className="my-chat">Pakyu too !</div>
                                 <div className="client-chat">Luh dati kabang tnga?</div>
-                                <div className="my-chat">sayo? oo pare matagal  na. Yieee</div>
-
-
-                                <div className="client-chat">Hi!</div>
-                                <div className="my-chat">Hello!</div>
-                                <div className="client-chat">Pakyu</div>
-                                <div className="my-chat">Pakyu too !</div>
-                                <div className="client-chat">Luh dati kabang tnga?</div>
-                                <div className="my-chat">sayo? oo pare matagal  na. Yieee</div>
-
-                                <div className="client-chat">Hi!</div>
-                                <div className="my-chat">Hello!</div>
-                                <div className="client-chat">Pakyu</div>
-                                <div className="my-chat">Pakyu too !</div>
-                                <div className="client-chat">Luh dati kabang tnga?</div>
-                                <div className="my-chat">sayo? oo pare matagal  na. Yieee</div>
+                                <div className="my-chat">sayo? oo pare matagal  na. Yieee</div> */}
                             </div>
                             {/* <!-- input field section --> */}
                             <div className="chat-input">
